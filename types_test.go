@@ -110,3 +110,73 @@ func TestCET_TimeToDate(t *testing.T) {
 		assert.Equal(t, 2, cetDate.Day)
 	})
 }
+
+func TestCET_DateMarshalText(t *testing.T) {
+	cet := timesafer.MustCET()
+	date, err := cet.DateAt(2022, 1, 1)
+	require.NoError(t, err)
+	expected := "2022-01-01"
+	actual, err := date.MarshalText()
+	require.NoError(t, err)
+	assert.Equal(t, expected, string(actual))
+}
+
+func TestCET_DateUnmarshalTextSuccess(t *testing.T) {
+	t.Run("valid date", func(t *testing.T) {
+		date := "2022-03-16"
+		cetDate := timesafer.CETDate{}
+		err := cetDate.UnmarshalText([]byte(date))
+		require.NoError(t, err)
+		assert.Equal(t, 2022, cetDate.Year)
+		assert.Equal(t, time.March, cetDate.Month)
+		assert.Equal(t, 16, cetDate.Day)
+	})
+	t.Run("valid date leap year", func(t *testing.T) {
+		date := "2020-02-29"
+		cetDate := timesafer.CETDate{}
+		err := cetDate.UnmarshalText([]byte(date))
+		require.NoError(t, err)
+		assert.Equal(t, 2020, cetDate.Year)
+		assert.Equal(t, time.February, cetDate.Month)
+		assert.Equal(t, 29, cetDate.Day)
+	})
+}
+
+func TestCET_DateUnmarshalTextFailure(t *testing.T) {
+	tests := []struct {
+		name, date string
+	}{
+		{
+			name: "long february",
+			date: "2020-02-30",
+		},
+		{
+			name: "zero year",
+			date: "0-01-01",
+		},
+		{
+			name: "zero month",
+			date: "2020-00-01",
+		},
+		{
+			name: "zero day",
+			date: "2020-01-00",
+		},
+		{
+			name: "invalid format no hyphens",
+			date: "20200101",
+		},
+		{
+			name: "invalid format no leading zeros",
+			date: "2020-1-1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cetDate := timesafer.CETDate{}
+			err := cetDate.UnmarshalText([]byte(tt.date))
+			require.Error(t, err)
+		})
+	}
+}
