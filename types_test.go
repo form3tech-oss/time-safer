@@ -180,3 +180,55 @@ func TestCET_DateUnmarshalTextFailure(t *testing.T) {
 		})
 	}
 }
+
+func TestCET_TimeMarshalText(t *testing.T) {
+	cet := timesafer.MustCET()
+	tm, err := cet.TimeAt(2022, 1, 1, 1, 1, 1, 123000000)
+	require.NoError(t, err)
+	actual, err := tm.MarshalText()
+	require.NoError(t, err)
+	assert.Equal(t, "2022-01-01T01:01:01.123+01:00", string(actual))
+}
+
+func TestCET_TimeUnmarshalTextSuccess(t *testing.T) {
+	tm := timesafer.CETTime{}
+	require.NoError(t, tm.UnmarshalText([]byte("2022-01-01T01:01:01.123+01:00")))
+	assert.Equal(t, 2022, tm.Year())
+	assert.Equal(t, time.January, tm.Month())
+	assert.Equal(t, 1, tm.Day())
+	assert.Equal(t, 1, tm.Hour())
+	assert.Equal(t, 1, tm.Minute())
+	assert.Equal(t, 1, tm.Second())
+	assert.Equal(t, 123000000, tm.Nanosecond())
+}
+
+func TestCET_TimeUnmarshalTextSuccessDifferentTimezone(t *testing.T) {
+	tm := timesafer.CETTime{}
+	require.NoError(t, tm.UnmarshalText([]byte("2022-12-31T23:59:00Z")))
+	assert.Equal(t, 2023, tm.Year())
+	assert.Equal(t, time.January, tm.Month())
+	assert.Equal(t, 1, tm.Day())
+	assert.Equal(t, 0, tm.Hour())
+	assert.Equal(t, 59, tm.Minute())
+	assert.Equal(t, 0, tm.Second())
+	assert.Equal(t, 0, tm.Nanosecond())
+}
+
+func TestCET_TimeUnmarshalTextSuccessMissingTimezone(t *testing.T) {
+	tm := timesafer.CETTime{}
+	assert.NoError(t, tm.UnmarshalText([]byte("0001-12-31T23:59:00")))
+	assert.Equal(t, 1, tm.Year())
+	assert.Equal(t, time.December, tm.Month())
+	assert.Equal(t, 31, tm.Day())
+	assert.Equal(t, 23, tm.Hour())
+	assert.Equal(t, 59, tm.Minute())
+	assert.Equal(t, 0, tm.Second())
+	assert.Equal(t, 0, tm.Nanosecond())
+}
+
+func TestCET_TimeUnmarshalTextFailure(t *testing.T) {
+	tm := timesafer.CETTime{}
+	assert.Error(t, tm.UnmarshalText([]byte("2022-12-31T23:59")))
+	assert.Error(t, tm.UnmarshalText([]byte("2022-12-31T23:59.123")))
+	assert.Error(t, tm.UnmarshalText([]byte("1-12-31T23:59:00")))
+}

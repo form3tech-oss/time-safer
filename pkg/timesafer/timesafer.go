@@ -34,6 +34,12 @@ func (c CET) DateAt(year int, month time.Month, day int) (CETDate, error) {
 	return t.Date(), err
 }
 
+func (c CET) Parse(format string, value string) (CETTime, error) {
+	loc := time.Location(c)
+	t, err := time.ParseInLocation(format, value, &loc)
+	return CETTime{t: t.In(&loc)}, err
+}
+
 func NewCET() (CET, error) {
 	loc, err := time.LoadLocation("Europe/Berlin")
 	return CET(*loc), err
@@ -61,6 +67,54 @@ func (c CETTime) Date() CETDate {
 		Month: c.t.Month(),
 		Day:   c.t.Day(),
 	}
+}
+
+func (c *CETTime) MarshalText() ([]byte, error) {
+	return c.t.MarshalText()
+}
+
+func (c *CETTime) UnmarshalText(text []byte) error {
+	cet, err := NewCET()
+	if err != nil {
+		return err
+	}
+	t, err := cet.Parse(time.RFC3339Nano, string(text))
+	if err != nil {
+		t, err = cet.Parse("2006-01-02T15:04:05.999999999", string(text))
+		if err != nil {
+			return err
+		}
+	}
+	*c = t
+	return nil
+}
+
+func (c *CETTime) Year() int {
+	return c.t.Year()
+}
+
+func (c *CETTime) Month() time.Month {
+	return c.t.Month()
+}
+
+func (c *CETTime) Day() int {
+	return c.t.Day()
+}
+
+func (c *CETTime) Hour() int {
+	return c.t.Hour()
+}
+
+func (c *CETTime) Minute() int {
+	return c.t.Minute()
+}
+
+func (c *CETTime) Second() int {
+	return c.t.Second()
+}
+
+func (c *CETTime) Nanosecond() int {
+	return c.t.Nanosecond()
 }
 
 type CETDate struct {
