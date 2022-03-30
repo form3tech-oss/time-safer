@@ -18,13 +18,13 @@ func TestCET_TimeIsInLocation(t *testing.T) {
 	cet, err := timesafer.NewCET()
 	require.NoError(t, err)
 	saferNow := cet.Now()
-
 	assert.Equal(t, now.Format(time.RFC3339), saferNow.RFC3339())
 }
 
 func TestCET_TimeAtValidTime(t *testing.T) {
 	cet := timesafer.MustCET()
 	cetTime, err := cet.TimeAt(2022, time.March, 2, 15, 33, 40, 0)
+	assert.Equal(t, cet, cetTime.CET())
 	require.NoError(t, err)
 	assert.Equal(t, "2022-03-02T15:33:40+01:00", cetTime.RFC3339())
 }

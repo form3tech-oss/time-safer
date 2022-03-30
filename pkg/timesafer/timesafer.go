@@ -12,7 +12,7 @@ type CET time.Location
 
 func (c CET) Now() CETTime {
 	loc := time.Location(c)
-	return CETTime{time.Now().In(&loc)}
+	return CETTime{cet: c, t: time.Now().In(&loc)}
 }
 
 func (c CET) TimeAt(year int, month time.Month, day, hour, min, sec, nsec int) (CETTime, error) {
@@ -26,7 +26,7 @@ func (c CET) TimeAt(year int, month time.Month, day, hour, min, sec, nsec int) (
 		t.Hour() != hour || t.Minute() != min || t.Second() != sec || t.Nanosecond() != nsec {
 		return CETTime{}, errors.New("time is invalid")
 	}
-	return CETTime{t}, nil
+	return CETTime{cet: c, t: t}, nil
 }
 
 func (c CET) DateAt(year int, month time.Month, day int) (CETDate, error) {
@@ -37,7 +37,10 @@ func (c CET) DateAt(year int, month time.Month, day int) (CETDate, error) {
 func (c CET) Parse(format string, value string) (CETTime, error) {
 	loc := time.Location(c)
 	t, err := time.ParseInLocation(format, value, &loc)
-	return CETTime{t: t.In(&loc)}, err
+	return CETTime{
+		cet: c,
+		t:   t.In(&loc),
+	}, err
 }
 
 func NewCET() (CET, error) {
@@ -54,7 +57,8 @@ func MustCET() CET {
 }
 
 type CETTime struct {
-	t time.Time
+	cet CET
+	t   time.Time
 }
 
 func (c CETTime) RFC3339() string {
@@ -87,6 +91,10 @@ func (c *CETTime) UnmarshalText(text []byte) error {
 	}
 	*c = t
 	return nil
+}
+
+func (c *CETTime) CET() CET {
+	return c.cet
 }
 
 func (c *CETTime) Year() int {
